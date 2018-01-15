@@ -16,6 +16,8 @@
 
 package io.confluent.connect.storage;
 
+import io.confluent.connect.storage.common.GenericRecommender;
+import io.confluent.connect.storage.common.StorageCommonConfig;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -115,6 +117,8 @@ public class StorageSinkConnectorConfig extends AbstractConfig implements Compos
       + ".avro.file.CodecFactory)";
   public static final String[] AVRO_SUPPORTED_CODECS = new String[]{"null", "deflate", "snappy",
       "bzip2"};
+
+  protected static final GenericRecommender STORAGE_CLASS_RECOMMENDER = new GenericRecommender();
 
   /**
    * Create a new configuration definition.
@@ -273,8 +277,14 @@ public class StorageSinkConnectorConfig extends AbstractConfig implements Compos
     return configDef;
   }
 
+  protected StorageCommonConfig commonConfig;
+
   public String getAvroCodec() {
     return getString(AVRO_CODEC_CONFIG);
+  }
+
+  public StorageCommonConfig getStorageCommonConfig() {
+    return commonConfig;
   }
 
   @Override
@@ -284,6 +294,8 @@ public class StorageSinkConnectorConfig extends AbstractConfig implements Compos
 
   public StorageSinkConnectorConfig(ConfigDef configDef, Map<String, String> props) {
     super(configDef, props);
+    ConfigDef storageCommonConfigDef = StorageCommonConfig.newConfigDef(STORAGE_CLASS_RECOMMENDER);
+    commonConfig = new StorageCommonConfig(storageCommonConfigDef, originalsStrings());
   }
 
   public AvroDataConfig avroDataConfig() {

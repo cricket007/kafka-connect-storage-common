@@ -17,6 +17,7 @@
 package io.confluent.connect.storage.hive.avro;
 
 import io.confluent.connect.avro.AvroData;
+import io.confluent.connect.storage.StorageSinkConnectorConfig;
 import io.confluent.connect.storage.common.StorageCommonConfig;
 import io.confluent.connect.storage.hive.HiveFactory;
 import io.confluent.connect.storage.hive.HiveMetaStore;
@@ -32,8 +33,13 @@ public class AvroHiveFactory implements HiveFactory {
   }
 
   @Override
-  public HiveUtil createHiveUtil(AbstractConfig conf, HiveMetaStore hiveMetaStore) {
-    return createHiveUtil((StorageCommonConfig) conf, hiveMetaStore);
+  public HiveUtil createHiveUtil(AbstractConfig config, HiveMetaStore hiveMetaStore) {
+    return new AvroHiveUtil(((StorageSinkConnectorConfig) config).getStorageCommonConfig(),
+          avroData, hiveMetaStore);
+  }
+
+  public HiveUtil createHiveUtil(StorageSinkConnectorConfig conf, HiveMetaStore hiveMetaStore) {
+    return new AvroHiveUtil(conf.getStorageCommonConfig(), avroData, hiveMetaStore);
   }
 
   @Deprecated
