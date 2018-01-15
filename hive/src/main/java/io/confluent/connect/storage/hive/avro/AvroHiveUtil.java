@@ -16,6 +16,7 @@
 
 package io.confluent.connect.storage.hive.avro;
 
+import io.confluent.connect.storage.hive.HiveSchemaConverter;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.serde2.avro.AvroSerdeUtils;
@@ -27,6 +28,8 @@ import io.confluent.connect.storage.hive.HiveUtil;
 import io.confluent.connect.storage.partitioner.Partitioner;
 import io.confluent.connect.storage.common.StorageCommonConfig;
 import io.confluent.connect.storage.errors.HiveMetaStoreException;
+
+import java.util.List;
 
 public class AvroHiveUtil extends HiveUtil {
 
@@ -66,6 +69,8 @@ public class AvroHiveUtil extends HiveUtil {
     tableParams.put(AVRO_SCHEMA_LITERAL, avroData.fromConnectSchema(schema));
     Table table = hiveMetaStore.getTable(database, tableName);
     setTableParams(table);
+    List<FieldSchema> columns = HiveSchemaConverter.convertSchema(schema);
+    table.setFields(columns);
     hiveMetaStore.alterTable(table);
   }
 
