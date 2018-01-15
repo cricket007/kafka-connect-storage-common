@@ -36,7 +36,9 @@ public abstract class HiveUtil {
   public HiveUtil(AbstractConfig connectorConfig, HiveMetaStore hiveMetaStore) {
     this.url = connectorConfig.getString(StorageCommonConfig.STORE_URL_CONFIG);
     this.hiveMetaStore = hiveMetaStore;
-    this.delim = connectorConfig.getString(StorageCommonConfig.DIRECTORY_DELIM_CONFIG);
+    String delim = connectorConfig.getString(StorageCommonConfig.DIRECTORY_DELIM_CONFIG);
+    this.delim = delim != null ? delim :
+          connectorConfig.getString(StorageCommonConfig.DIRECTORY_DELIM_DEFAULT);
   }
 
   public abstract void createTable(String database, String tableName, Schema schema,
