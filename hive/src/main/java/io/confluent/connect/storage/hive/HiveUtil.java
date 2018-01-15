@@ -56,8 +56,7 @@ public abstract class HiveUtil {
     this.url = connectorConfig.getString(StorageCommonConfig.STORE_URL_CONFIG);
     this.hiveMetaStore = hiveMetaStore;
     String delim = connectorConfig.getString(StorageCommonConfig.DIRECTORY_DELIM_CONFIG);
-    this.delim = delim != null ? delim :
-          connectorConfig.getString(StorageCommonConfig.DIRECTORY_DELIM_DEFAULT);
+    this.delim = delim != null ? delim : StorageCommonConfig.DIRECTORY_DELIM_DEFAULT;
     this.topicsDir = connectorConfig.getString(StorageCommonConfig.TOPICS_DIR_CONFIG);
     this.tableParams = new HashMap<>();
   }
