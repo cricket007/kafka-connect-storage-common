@@ -16,18 +16,10 @@
 
 package io.confluent.connect.storage.hive.avro;
 
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat;
-import org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat;
-import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Table;
-import org.apache.hadoop.hive.serde2.avro.AvroSerDe;
 import org.apache.hadoop.hive.serde2.avro.AvroSerdeUtils;
 import org.apache.kafka.connect.data.Schema;
-
-import java.util.List;
 
 import io.confluent.connect.avro.AvroData;
 import io.confluent.connect.storage.hive.HiveMetaStore;
@@ -35,18 +27,18 @@ import io.confluent.connect.storage.hive.HiveUtil;
 import io.confluent.connect.storage.partitioner.Partitioner;
 import io.confluent.connect.storage.common.StorageCommonConfig;
 import io.confluent.connect.storage.errors.HiveMetaStoreException;
-import io.confluent.connect.storage.hive.HiveSchemaConverter;
 
 public class AvroHiveUtil extends HiveUtil {
 
-  protected static final String AVRO_SERDE = AvroSerDe.class.getSimpleName();
-  protected static final String AVRO_INPUT_FORMAT = AvroContainerInputFormat.class.getSimpleName();
+  protected static final String AVRO_SERDE = "org.apache.hadoop.hive.serde2.avro.AvroSerDe";
+  protected static final String AVRO_INPUT_FORMAT =
+        "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat";
   protected static final String AVRO_OUTPUT_FORMAT =
-        AvroContainerOutputFormat.class.getSimpleName();
+        "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat";
   protected static final String AVRO_SCHEMA_LITERAL =
         AvroSerdeUtils.AvroTableProperties.SCHEMA_LITERAL.getPropName();
+
   protected final AvroData avroData;
-  protected final String topicsDir;
 
   public AvroHiveUtil(
         StorageCommonConfig conf, AvroData avroData, HiveMetaStore
@@ -54,14 +46,14 @@ public class AvroHiveUtil extends HiveUtil {
   ) {
     super(conf, hiveMetaStore);
     this.avroData = avroData;
-    this.topicsDir = conf.getString(StorageCommonConfig.TOPICS_DIR_CONFIG);
   }
 
   @Override
   public void createTable(String database, String tableName, Schema schema,
                           Partitioner<FieldSchema> partitioner)
         throws HiveMetaStoreException {
-    Table table = constructAvroTable(database, tableName, schema, partitioner);
+    tableParams.put(AVRO_SCHEMA_LITERAL, avroData.fromConnectSchema(schema));
+    Table table = constructTable(database, tableName, schema, partitioner);
     hiveMetaStore.createTable(table);
   }
 
@@ -71,34 +63,24 @@ public class AvroHiveUtil extends HiveUtil {
         String tableName,
         Schema schema
   ) throws HiveMetaStoreException {
+    tableParams.put(AVRO_SCHEMA_LITERAL, avroData.fromConnectSchema(schema));
     Table table = hiveMetaStore.getTable(database, tableName);
-    table.getParameters().put(AVRO_SCHEMA_LITERAL, avroData.fromConnectSchema(schema).toString());
+    setTableParams(table);
     hiveMetaStore.alterTable(table);
   }
 
-  protected Table constructAvroTable(
-        String database,
-        String tableName,
-        Schema schema,
-        Partitioner<FieldSchema> partitioner
-  )
-        throws HiveMetaStoreException {
-    Table table = newTable(database, tableName);
-    table.setTableType(TableType.EXTERNAL_TABLE);
-    table.getParameters().put("EXTERNAL", "TRUE");
-    String tablePath = hiveDirectoryName(url, topicsDir, tableName);
-    table.setDataLocation(new Path(tablePath));
-    table.setSerializationLib(AVRO_SERDE);
-    try {
-      table.setInputFormatClass(AVRO_INPUT_FORMAT);
-      table.setOutputFormatClass(AVRO_OUTPUT_FORMAT);
-    } catch (HiveException e) {
-      throw new HiveMetaStoreException("Cannot find input/output format:", e);
-    }
-    List<FieldSchema> columns = HiveSchemaConverter.convertSchema(schema);
-    table.setFields(columns);
-    table.setPartCols(partitioner.partitionFields());
-    table.getParameters().put(AVRO_SCHEMA_LITERAL, avroData.fromConnectSchema(schema).toString());
-    return table;
+  @Override
+  public String getSerde() {
+    return AVRO_SERDE;
+  }
+
+  @Override
+  public String getInputFormat() {
+    return AVRO_INPUT_FORMAT;
+  }
+
+  @Override
+  public String getOutputFormat() {
+    return AVRO_OUTPUT_FORMAT;
   }
 }

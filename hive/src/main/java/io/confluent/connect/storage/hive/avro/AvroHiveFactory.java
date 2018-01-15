@@ -33,13 +33,12 @@ public class AvroHiveFactory implements HiveFactory {
   }
 
   @Override
-  public HiveUtil createHiveUtil(AbstractConfig config, HiveMetaStore hiveMetaStore) {
-    return new AvroHiveUtil(((StorageSinkConnectorConfig) config).getStorageCommonConfig(),
-          avroData, hiveMetaStore);
+  public HiveUtil createHiveUtil(AbstractConfig conf, HiveMetaStore hiveMetaStore) {
+    return createHiveUtil((StorageSinkConnectorConfig) conf, hiveMetaStore);
   }
 
   public HiveUtil createHiveUtil(StorageSinkConnectorConfig conf, HiveMetaStore hiveMetaStore) {
-    return new AvroHiveUtil(conf.getStorageCommonConfig(), avroData, hiveMetaStore);
+    return createHiveUtil(conf.getStorageCommonConfig(), hiveMetaStore);
   }
 
   @Deprecated
