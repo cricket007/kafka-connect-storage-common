@@ -23,6 +23,7 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.Width;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class StorageCommonConfig extends AbstractConfig implements ComposableConfig {
 
@@ -137,5 +138,16 @@ public class StorageCommonConfig extends AbstractConfig implements ComposableCon
 
   public StorageCommonConfig(ConfigDef configDef, Map<String, String> props) {
     super(configDef, props);
+  }
+
+  public Pattern getCommittedFilePattern() {
+    String fileDelim = (String) get(StorageCommonConfig.FILE_DELIM_CONFIG);
+    if (fileDelim == null) {
+      fileDelim = StorageCommonConfig.FILE_DELIM_DEFAULT;
+    }
+    return Pattern.compile(String.format(
+          "([a-zA-Z0-9\\._\\-]+)%1$s(\\d+)%<s(\\d+)%<s(\\d+)(.\\w+)?",
+          Pattern.quote(fileDelim)
+    ));
   }
 }
